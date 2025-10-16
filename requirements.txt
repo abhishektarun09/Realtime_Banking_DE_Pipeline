@@ -1,3 +1,9 @@
 psycopg2
 faker
 dotenv
+requests
+boto3
+kafka-python
+pandas
+fastparquet
+dbt-snowflake
