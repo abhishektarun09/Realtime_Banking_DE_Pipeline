@@ -77,7 +77,7 @@ services:
   airflow-webserver:
     build:
       context: .
-      dockerfile: dockerfile_airflow.dockerfile
+      dockerfile: dockerfile-airflow.dockerfile
     container_name: airflow-webserver
     restart: always
     depends_on:
@@ -99,7 +99,7 @@ services:
   airflow-scheduler:
     build:
       context: .
-      dockerfile: dockerfile_airflow.dockerfile
+      dockerfile: dockerfile-airflow.dockerfile
     container_name: airflow-scheduler
     restart: always
     depends_on:
