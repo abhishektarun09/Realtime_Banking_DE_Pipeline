@@ -1,0 +1,13 @@
+banking_dbt:
+  outputs:
+    dev:
+      account: mn37623.central-india.azure
+      database: banking
+      password: UhvDFg9kj2&6ASb39343tFs^
+      role: accountadmin
+      schema: analytics
+      threads: 4
+      type: snowflake
+      user: tripathipriyanka385
+      warehouse: COMPUTE_WH
+  target: dev
