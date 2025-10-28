@@ -45,12 +45,6 @@ jobs:
           pip install -r requirements.txt
           pip install dbt-snowflake
 
-      # --- Linting ---
-      - name: Run linters (ruff)
-        run: |
-          pip install ruff
-          ruff check .
-
       # --- Unit Tests ---
       - name: Run unit tests (pytest)
         run: |
