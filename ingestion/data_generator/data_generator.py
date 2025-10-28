@@ -1,4 +1,5 @@
 import time
+import sys
 import psycopg2
 from decimal import Decimal, ROUND_DOWN
 from faker import Faker
@@ -7,6 +8,8 @@ import argparse
 import sys
 import os
 from dotenv import load_dotenv
+from src.logger import logging
+from src.exception import CustomException
 
 load_dotenv()
 
@@ -45,63 +48,71 @@ def random_money(min_val: Decimal, max_val: Decimal) -> Decimal:
 # -----------------------------
 # Connect to Postgres
 # -----------------------------
-conn = psycopg2.connect(
-    host=os.getenv("POSTGRES_HOST"),
-    port=os.getenv("POSTGRES_PORT"),
-    dbname=os.getenv("POSTGRES_DB"),
-    user=os.getenv("POSTGRES_USER"),
-    password=os.getenv("POSTGRES_PASSWORD"),
-)
-conn.autocommit = True
-cur = conn.cursor()
+try:
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST"),
+        port=os.getenv("POSTGRES_PORT"),
+        dbname=os.getenv("POSTGRES_DB"),
+        user=os.getenv("POSTGRES_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+    )
+    conn.autocommit = True
+    cur = conn.cursor()
+    
+except Exception as e:
+    raise CustomException(e, sys)
 
 # -----------------------------
 # Core generation logic (one iteration)
 # -----------------------------
 def run_iteration():
-    customers = []
-    # 1. Generate customers
-    for _ in range(NUM_CUSTOMERS):
-        first_name = fake.first_name()
-        last_name = fake.last_name()
-        email = fake.unique.email()
+    try:
+        customers = []
+        # 1. Generate customers
+        for _ in range(NUM_CUSTOMERS):
+            first_name = fake.first_name()
+            last_name = fake.last_name()
+            email = fake.unique.email()
 
-        cur.execute(
-            "INSERT INTO customers (first_name, last_name, email) VALUES (%s, %s, %s) RETURNING id",
-            (first_name, last_name, email),
-        )
-        customer_id = cur.fetchone()[0]
-        customers.append(customer_id)
-
-    # 2. Generate accounts
-    accounts = []
-    for customer_id in customers:
-        for _ in range(ACCOUNTS_PER_CUSTOMER):
-            account_type = random.choice(["SAVINGS", "CHECKING"])
-            initial_balance = random_money(INITIAL_BALANCE_MIN, INITIAL_BALANCE_MAX)
             cur.execute(
-                "INSERT INTO accounts (customer_id, account_type, balance, currency) VALUES (%s, %s, %s, %s) RETURNING id",
-                (customer_id, account_type, initial_balance, CURRENCY),
+                "INSERT INTO customers (first_name, last_name, email) VALUES (%s, %s, %s) RETURNING id",
+                (first_name, last_name, email),
             )
-            account_id = cur.fetchone()[0]
-            accounts.append(account_id)
+            customer_id = cur.fetchone()[0]
+            customers.append(customer_id)
 
-    # 3. Generate transactions
-    txn_types = ["DEPOSIT", "WITHDRAWAL", "TRANSFER"]
-    for _ in range(NUM_TRANSACTIONS):
-        account_id = random.choice(accounts)
-        txn_type = random.choice(txn_types)
-        amount = round(random.uniform(1, MAX_TXN_AMOUNT), 2)
-        related_account = None
-        if txn_type == "TRANSFER" and len(accounts) > 1:
-            related_account = random.choice([a for a in accounts if a != account_id])
+        # 2. Generate accounts
+        accounts = []
+        for customer_id in customers:
+            for _ in range(ACCOUNTS_PER_CUSTOMER):
+                account_type = random.choice(["SAVINGS", "CHECKING"])
+                initial_balance = random_money(INITIAL_BALANCE_MIN, INITIAL_BALANCE_MAX)
+                cur.execute(
+                    "INSERT INTO accounts (customer_id, account_type, balance, currency) VALUES (%s, %s, %s, %s) RETURNING id",
+                    (customer_id, account_type, initial_balance, CURRENCY),
+                )
+                account_id = cur.fetchone()[0]
+                accounts.append(account_id)
 
-        cur.execute(
-            "INSERT INTO transactions (account_id, txn_type, amount, related_account_id, status) VALUES (%s, %s, %s, %s, 'COMPLETED')",
-            (account_id, txn_type, amount, related_account),
-        )
+        # 3. Generate transactions
+        txn_types = ["DEPOSIT", "WITHDRAWAL", "TRANSFER"]
+        for _ in range(NUM_TRANSACTIONS):
+            account_id = random.choice(accounts)
+            txn_type = random.choice(txn_types)
+            amount = round(random.uniform(1, MAX_TXN_AMOUNT), 2)
+            related_account = None
+            if txn_type == "TRANSFER" and len(accounts) > 1:
+                related_account = random.choice([a for a in accounts if a != account_id])
 
-    print(f"Generated {len(customers)} customers, {len(accounts)} accounts, {NUM_TRANSACTIONS} transactions.")
+            cur.execute(
+                "INSERT INTO transactions (account_id, txn_type, amount, related_account_id, status) VALUES (%s, %s, %s, %s, 'COMPLETED')",
+                (account_id, txn_type, amount, related_account),
+            )
+
+        logging.info(f"Generated {len(customers)} customers, {len(accounts)} accounts, {NUM_TRANSACTIONS} transactions.")
+    
+    except Exception as e:
+        raise CustomException(e, sys)
 
 # -----------------------------
 # Main loop
@@ -110,17 +121,18 @@ try:
     iteration = 0
     while True:
         iteration += 1
-        print(f"\n--- Iteration {iteration} started ---")
+        logging.info(f"\n--- Iteration {iteration} started ---")
         run_iteration()
-        print(f"--- Iteration {iteration} finished ---")
+        logging.info(f"--- Iteration {iteration} finished ---")
         if not LOOP:
             break
         time.sleep(SLEEP_SECONDS)
 
 except KeyboardInterrupt:
-    print("\nInterrupted by user. Exiting gracefully...")
+    logging.warning("\nInterrupted by user. Exiting gracefully...")
 
 finally:
     cur.close()
     conn.close()
+    logging.info("Database connection closed. Exiting script.")
     sys.exit(0)

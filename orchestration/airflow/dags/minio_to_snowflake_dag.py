@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from src.logger import logging
 
 # Load environment variables
 load_dotenv()
@@ -52,7 +53,7 @@ def download_from_minio():
 def load_to_snowflake(**kwargs):
     local_files = kwargs["ti"].xcom_pull(task_ids="download_minio")
     if not local_files:
-        print("No files found in MinIO.")
+        logging.warning("No files found in MinIO.")
         return
 
     conn = snowflake.connector.connect(
@@ -67,12 +68,12 @@ def load_to_snowflake(**kwargs):
 
     for table, files in local_files.items():
         if not files:
-            print(f"No files for {table}, skipping.")
+            logging.info(f"No files for {table}, skipping.")
             continue
 
         for f in files:
             cur.execute(f"PUT file://{f} @%{table}")
-            print(f"Uploaded {f} -> @{table} stage")
+            logging.info(f"Uploaded {f} -> @{table} stage")
 
         copy_sql = f"""
         COPY INTO {table}
@@ -81,7 +82,7 @@ def load_to_snowflake(**kwargs):
         ON_ERROR='CONTINUE'
         """
         cur.execute(copy_sql)
-        print(f"Data loaded into {table}")
+        logging.info(f"Data loaded into {table}")
 
     cur.close()
     conn.close()

@@ -2,6 +2,9 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
+from src.logger import logging
+from src.exception import CustomException
+import sys
 
 # -----------------------------
 # Load environment variables
@@ -36,14 +39,18 @@ connector_config = {
 url = "http://localhost:8083/connectors"
 headers = {"Content-Type": "application/json"}
 
-response = requests.post(url, headers=headers, data=json.dumps(connector_config))
+try:
+    response = requests.post(url, headers=headers, data=json.dumps(connector_config))
 
-# -----------------------------
-# Debug/Output
-# -----------------------------
-if response.status_code == 201:
-    print("Connector created successfully!")
-elif response.status_code == 409:
-    print("Connector already exists.")
-else:
-    print(f"Failed to create connector ({response.status_code}): {response.text}")
+    # -----------------------------
+    # Debug/Output
+    # -----------------------------
+    if response.status_code == 201:
+        logging.info("Connector created successfully!")
+    elif response.status_code == 409:
+        logging.info("Connector already exists.")
+    else:
+        logging.info(f"Failed to create connector ({response.status_code}): {response.text}")
+        
+except Exception as e:
+    raise CustomException(e, sys)
