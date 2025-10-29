@@ -1,5 +1,4 @@
-# Real-Time Banking Data Pipeline
-
+# Real-Time Data Engineering Pipeline for Financial Insights
 ## Overview
 This project demonstrates a **real-time data engineering pipeline** built for a simulated banking environment.  
 It highlights how modern tools can work together to enable **streaming data ingestion**, **automated orchestration**, **cloud-based transformation**, and **business intelligence** — combining containerized infrastructure with external cloud services for a complete end-to-end data solution.
@@ -28,6 +27,16 @@ The pipeline captures **banking transactions**, **accounts**, and **customer act
    - **Business Ready (Gold)** – Analytics-ready marts for BI consumption.  
 7. **dbt (Data Build Tool)** → Performs SQL-based transformations, builds data models, and applies snapshotting logic (SCD Type-2).  
 8. **Power BI** → Connects directly to Snowflake for interactive dashboards and analytics.
+
+---
+
+## Power BI Dashboard
+![Dashboard](resources/images/dashboard.jpg)
+
+Power BI connects directly to **Snowflake** to visualize:
+- Real-time transaction metrics  
+- Accounts and Customers metrics  
+- Customer growth trends
 
 ---
 
@@ -76,16 +85,6 @@ The pipeline captures **banking transactions**, **accounts**, and **customer act
 - **Continuous Deployment (CD):** Demonstration workflow that deploys dbt models to Snowflake automatically.  
 - **Future Scope:** The same setup can be extended for: 
   - Container image builds & version tagging  
-
----
-
-## Power BI Dashboard
-![Dashboard](resources/images/dashboard.jpg)
-
-Power BI connects directly to **Snowflake** to visualize:
-- Real-time transaction metrics  
-- Accounts and Customers metrics  
-- Customer growth trends
 
 ---
 
