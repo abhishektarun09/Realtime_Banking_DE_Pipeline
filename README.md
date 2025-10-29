@@ -80,11 +80,12 @@ The pipeline captures **banking transactions**, **accounts**, and **customer act
 ---
 
 ## Power BI Dashboard
+![Dashboard](resources/images/dashboard.jpg)
+
 Power BI connects directly to **Snowflake** to visualize:
 - Real-time transaction metrics  
-- Account balances  
+- Accounts and Customers metrics  
 - Customer growth trends
-- Revenue performance dashboards  
 
 ---
 
